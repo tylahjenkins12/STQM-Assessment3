@@ -23,10 +23,9 @@ python -m venv venv
 ```
 
 ### 3. Activate Virtual Environment
-- **macOS/Linux:**
-  ```bash
-  source venv/bin/activate
-  ```
+```bash
+source venv/bin/activate
+```
 
 ### 4. Install Dependencies
 ```bash
