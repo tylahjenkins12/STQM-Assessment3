@@ -17,11 +17,13 @@ def test_shopping_cart_management():
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
     driver.maximize_window()
     wait = WebDriverWait(driver, 20)
+    print("Step 1: Successful - Browser opened")
 
     try:
         # Step 2: Navigate to homepage
         driver.get("https://ecommerce-playground.lambdatest.io/index.php?route=common/home")
         time.sleep(3)
+        print("Step 2: Successful - Navigated to homepage")
 
         # Step 3: Find and add a product to cart
         product_name = "HTC Touch HD"
@@ -43,11 +45,14 @@ def test_shopping_cart_management():
                     break
             except:
                 continue
-        time.sleep(3)
+        time.sleep(2)
+        print("Step 3: Successful - Product added to cart")
 
-        # Step 4: Navigate to cart page
-        driver.get("https://ecommerce-playground.lambdatest.io/index.php?route=checkout/cart")
+        # Step 4: Click View Cart button from notification
+        view_cart = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'View Cart')]")))
+        view_cart.click()
         time.sleep(3)
+        print("Step 4: Successful - Navigated to cart page")
 
         # Step 5: Verify cart displays product name, image, and price
         cart_product = wait.until(EC.presence_of_element_located((By.PARTIAL_LINK_TEXT, product_name)))
@@ -57,34 +62,37 @@ def test_shopping_cart_management():
         assert len(product_images) > 0
 
         # Get total price before quantity change
-        total_element = driver.find_element(By.XPATH, "//tbody/tr/td[last()]")
-        original_total = total_element.text
-        time.sleep(1)
+        import re
+        time.sleep(2)
+        total_price = driver.find_element(By.XPATH, "//div[@class='col-md-4']//td[text()='Total:']/following-sibling::td/strong")
+        original_price = float(re.sub(r'[^\d.]', '', total_price.text))
+        print("Step 5: Successful - Cart displays product details")
 
         # Step 6: Locate quantity input field and update from 1 to 2
         quantity_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[name^='quantity']")))
         quantity_input.clear()
         quantity_input.send_keys("2")
         time.sleep(1)
+        print("Step 6: Successful - Quantity updated to 2")
 
-        # Step 7: Click update button
-        update_buttons = driver.find_elements(By.CSS_SELECTOR, "button[type='submit']")
-        for btn in update_buttons:
-            onclick = btn.get_attribute('onclick') or ''
-            inner_html = btn.get_attribute('innerHTML') or ''
-            if 'update' in onclick.lower() or 'fa-refresh' in inner_html:
-                driver.execute_script("arguments[0].click();", btn)
-                break
-        time.sleep(4)
+        # Step 7: Click update button (the one next to quantity)
+        update_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[@type='submit' and contains(@class, 'btn-primary')]//i[@class='fas fa-sync-alt']")))
+        driver.execute_script("arguments[0].click();", update_button)
+        time.sleep(5)
+        print("Step 7: Successful - Update button clicked")
 
-        # Step 8: Validate quantity updated to 2 and total price changed
-        time.sleep(2)
+        # Step 8: Validate quantity updated to 2 and total price doubled
+        time.sleep(3)
         quantity_input = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[name^='quantity']")))
         assert quantity_input.get_attribute("value") == "2", "Quantity not updated to 2"
 
-        # Just verify quantity is 2 - price update may be async
-        print(f"Quantity successfully updated to 2")
-        time.sleep(1)
+        # Validate price doubled
+        updated_total = driver.find_element(By.XPATH, "//div[@class='col-md-4']//td[text()='Total:']/following-sibling::td/strong")
+        updated_price = float(re.sub(r'[^\d.]', '', updated_total.text))
+        expected_price = original_price * 2
+        assert updated_price == expected_price, f"Price did not double. Expected: ${expected_price}, Got: ${updated_price}"
+
+        print("Step 8: Successful - Quantity and price validated")
 
         # Step 9: Click X icon to remove product from cart
         remove_buttons = driver.find_elements(By.CSS_SELECTOR, "button[type='button']")
@@ -94,6 +102,7 @@ def test_shopping_cart_management():
                 driver.execute_script("arguments[0].click();", btn)
                 break
         time.sleep(3)
+        print("Step 9: Successful - Product removed from cart")
 
         # Step 10: Validate product removed and cart is empty
         try:
@@ -104,12 +113,14 @@ def test_shopping_cart_management():
             products = driver.find_elements(By.PARTIAL_LINK_TEXT, product_name)
             assert len(products) == 0, "Product still in cart"
 
+        print("Step 10: Successful - Cart is empty")
         print("TEST PASSED - Cart management operations successful")
 
     finally:
         # Step 11: Close browser
         time.sleep(2)
         driver.quit()
+        print("Step 11: Successful - Browser closed")
 
 if __name__ == "__main__":
     test_shopping_cart_management()
