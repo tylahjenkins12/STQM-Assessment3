@@ -1,5 +1,5 @@
 """
-Test Case ID: T010
+Test Case ID: T009
 Function ID/Name: F6 Product Comparison
 Tester: Thomas Sutton (25926496)
 """
